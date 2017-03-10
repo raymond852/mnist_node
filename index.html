@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>
+MNIST TEST
+</title>
+<style>
+body {
+	font-family: 'Trebuchet MS', 'Liberation Sans', 'DejaVu Sans',
+		sans-serif;
+	font-size: 13px;
+	background-color: #004747;
+	color: #ccc;
+	line-height: 1.6;
+}
+span {
+border-bottom-style:solid;
+border-width:1px;
+}
+.left{
+width:40%;
+float:left;
+}
+.right{
+width:60%;
+float:right;
+}
+#post_test{
+margin-top:60px;
+}
+</style>
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
+<script>
+
+  var busy = false;
+  
+  function postIndex(){
+    var index=parseInt($("#index_input").val());
+    if (isNaN(index) || index<0 || index>9999){
+      alert('input index should be a number and less than 9999');
+      return;
+    }
+    $.getJSON(
+       '/select_index?index='+$('#index_input').val(),function(data){
+        var imageData= data.imgData;
+        var labelData = data.labelData;
+        var networkData = data.networkData;
+        var predictData = data.predictData
+        $('#mnist_label').text('MNIST Label: '+labelData.indexOf(1));
+        $('#predict_number').text('Predict number: '+predictData);
+        var ctx = $("#mnist_image").get(0).getContext('2d');
+        console.log(networkData);
+        for(var y = 0; y < 28; y++){
+          for(var x = 0; x < 28; x++){
+              var val = imageData[y*28+x];
+              ctx.fillStyle = 'rgb(' + '0' + ', ' + val + ', ' + val + ')';
+              ctx.fillRect(x*2, y*2, 2, 2); //x, y, w, h
+          }
+        }
+        for (i=0;i<networkData.length;i++){
+          var id = "#"+i;
+          $(id).html(networkData[i]);
+        }
+      }
+      );
+  }
+  
+  function postTestAll(){
+    $.ajax({
+      url:'/test_all?',
+      beforeSend:function(){
+        if (busy)  {
+          $('#all_test').val('Server is calculating, please wait!');
+          return false;
+        }  
+      },
+      success:function(data){
+        $('#all_test').val(data);
+        var corr = 'Accuracy: '+ (10000-(data.match(new RegExp('\\,','g')).length+1))+'/10000';
+        $('#correctness').text(corr)
+        busy = false;
+      }
+    });
+    busy = true;
+  }
+  </script>
+</head>
+	<body>
+	<div class="left">
+	<div>
+	<canvas id="mnist_image" width='56' height='56'></canvas>
+	</div>
+	<span id='select_index'>Select Offset Index(0~9999): <input id="index_input" type="number">
+	<input type="submit" value="Submit" onclick="postIndex()">
+	</span></br>
+	<span id='mnist_label'>MNIST Label: </span></br>
+	<span id='predict_number' >Predict number: </span></br>
+	<span id='network_output'>Network output: </span></br>
+	<table>
+	<tr>
+		<td>0: </td>
+		<td id='0'></td>
+	</tr>
+	<tr>
+		<td>1: </td>
+		<td id='1'></td>
+	</tr>
+	<tr>
+		<td>2: </td>
+		<td id='2'></td>
+	</tr>
+	<tr>
+		<td>3: </td>
+		<td id='3'></td>
+	</tr>
+	<tr>
+		<td>4: </td>
+		<td id='4'></td>
+	</tr>
+	<tr>
+		<td>5: </td>
+		<td id='5'></td>
+	</tr>
+	<tr>
+		<td>6: </td>
+		<td id='6'></td>
+	</tr>
+	<tr>
+		<td>7: </td>
+		<td id='7'></td>
+	</tr>
+	<tr>
+		<td>8: </td>
+		<td id='8'></td>
+	</tr>
+	<tr>
+		<td>9: </td>
+		<td id='9'></td>
+	</tr>
+	</table>
+	</div>
+	<div class='right'>
+	<input id="post_test" type="submit" value="Test all input data" onclick="postTestAll()"></br>
+	<span>Test data indicate the index of the wrong predicted image</span></br>
+	<span id='correctness'>Correctness: </span></br>
+	<textarea id="all_test" rows="30" cols="80"></textarea>
+	</div>
+		</body>
+</html>
